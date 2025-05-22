@@ -1,0 +1,11 @@
+{
+  "name": "netlist",
+  "version": "0.0.1",
+  "description": "visualize netlists",
+  "main": "index.html",
+  "scripts": {
+    "test": "dunno"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<style>
+    #model {
+        background-color: #ccc;
+    }
+    .block-box {
+        fill: #fff;
+        stroke: #888;
+        stroke-width: 1px;
+    }
+    .block:hover rect {
+        stroke: #f00;
+        stroke-width: 2px;
+    }
+    .block-name {
+        fill: #555;
+        font: 8px sans-serif;
+    }
+    .link {
+        stroke: black;
+        stroke-width: 1px;
+        fill: none;
+    }
+    .link:hover {
+        stroke: #f00;
+        stroke-width: 2px;
+    }
+</style>
+
+<script src="./dist/interact.js"></script>
+<script src="./dist/netlist.js"></script>
+<script src="./dist/parse.js"></script>
+<script>
+
+    function animate() {
+        let node = randchoice(nodes);
+        let x = 0;
+        let y = node.y;
+        let step = () => {
+            node.node.setAttribute("transform", `translate(${x}, ${y})`);
+            x += 10;
+            if (x < 1000) {
+                window.requestAnimationFrame(step);
+            } else {
+                window.requestAnimationFrame(animate);
+            }
+        };
+        step();
+    }
+</script>
+
+<body onload="init()">
+<svg id="model" width="90vw" height="90vh">
+    <g id="view" transform="scale(2)">
+        <g id="links"></g>
+        <g id="blocks"></g>
+    </g>
+</svg>
+</body>
