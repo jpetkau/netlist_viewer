@@ -14,8 +14,12 @@ const BLOCK_WIDTH = GRID_SIZE * 9;
 const LAYER_WIDTH = 100 + BLOCK_WIDTH;
 class Graph {
     constructor() {
+        /// All cells, indexed by id
         this.cells = [];
+        /// All links, in arbitrary order
         this.links = [];
+        /// Cells indexed by layer and sort order within layer
+        this.cell_order = [];
     }
     /// Check all the invariants a graph should have.
     validate() {
@@ -101,14 +105,47 @@ class Graph {
             }
         }
     }
-    update_xy() {
+    init_layers() {
         var _a;
-        let height = [];
+        let layers = [];
         for (let cell of this.cells) {
-            let y = (_a = height[cell.depth]) !== null && _a !== void 0 ? _a : 0;
-            cell.x = cell.depth * LAYER_WIDTH;
-            cell.y = y;
-            height[cell.depth] = y + (Math.max(cell.in_links.length, cell.out_links.length) + 1) * GRID_SIZE;
+            let layer = (_a = layers[cell.depth]) !== null && _a !== void 0 ? _a : [];
+            layer.push(cell);
+            layers[cell.depth] = layer;
+        }
+        this.cell_order = layers;
+    }
+    greedy_sort() {
+        /// Minimal sort algorithm:
+        /// - we take the first layer's order as given
+        /// - go through its output ports sequentially, and assign the next layer's cells first come first serve
+        //  - repeat for remaining layers
+        this.init_layers();
+        for (let i = 0; i + 1 < this.cell_order.length; i++) {
+            let placed = new Set();
+            let srcl = this.cell_order[i];
+            let dstl = [];
+            for (let src of srcl) {
+                for (let link of src.out_links) {
+                    let dst = link.dst;
+                    if (!placed.has(dst)) {
+                        placed.add(dst);
+                        dstl.push(dst);
+                    }
+                }
+            }
+            this.cell_order[i] = dstl;
+        }
+    }
+    update_xy() {
+        for (let i = 0; i < this.cell_order.length; i++) {
+            let layer = this.cell_order[i];
+            let y = 0;
+            for (let cell of layer) {
+                cell.x = cell.depth * LAYER_WIDTH;
+                cell.y = y;
+                y += (Math.max(cell.in_links.length, cell.out_links.length) + 1) * GRID_SIZE;
+            }
         }
     }
     /// insert a new link into the graph, creating a new port on both ends
@@ -247,6 +284,8 @@ function show_graph(graph) {
     graph.insert_dummy_cells();
     console.log("Dummy cells inserted");
     graph.validate();
+    graph.init_layers();
+    graph.greedy_sort();
     graph.update_xy();
     console.log("xy updated");
     graph.validate();
@@ -256,6 +295,7 @@ function show_graph(graph) {
 async function init() {
     let netlist = await load_netlist("design_dump.txt");
     graph = to_graph(netlist);
+    //graph = make_big_test_graph();
     show_graph(graph);
 }
 //# sourceMappingURL=netlist.js.map

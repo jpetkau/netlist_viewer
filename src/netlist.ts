@@ -42,8 +42,14 @@ type Cell = {
 }
 
 class Graph {
+    /// All cells, indexed by id
     cells: Cell[] = [];
+
+    /// All links, in arbitrary order
     links: Link[] = [];
+
+    /// Cells indexed by layer and sort order within layer
+    cell_order: Cell[][] = [];
 
     /// Check all the invariants a graph should have.
     validate() {
@@ -137,14 +143,49 @@ class Graph {
         }
     }
 
-    update_xy() {
-        let height: number[] = [];
-
+    init_layers() {
+        let layers: Cell[][] = [];
         for (let cell of this.cells) {
-            let y = height[cell.depth] ?? 0;
-            cell.x = cell.depth * LAYER_WIDTH;
-            cell.y = y;
-            height[cell.depth] = y + (Math.max(cell.in_links.length, cell.out_links.length) + 1) * GRID_SIZE;
+            let layer = layers[cell.depth] ?? [];
+            layer.push(cell);
+            layers[cell.depth] = layer;
+        }
+        this.cell_order = layers;
+    }
+
+    greedy_sort() {
+        /// Minimal sort algorithm:
+        /// - we take the first layer's order as given
+        /// - go through its output ports sequentially, and assign the next layer's cells first come first serve
+        //  - repeat for remaining layers
+        this.init_layers();
+
+        for (let i=0; i+1<this.cell_order.length; i++) {
+            let placed = new Set<Cell>();
+            let srcl = this.cell_order[i];
+            let dstl = [];
+            for (let src of srcl) {
+                for (let link of src.out_links) {
+                    let dst = link.dst;
+                    if (!placed.has(dst)) {
+                        placed.add(dst);
+                        dstl.push(dst);
+                    }
+                }
+            }
+            this.cell_order[i] = dstl;
+        }
+    }
+
+    update_xy() {
+        for (let i=0; i<this.cell_order.length; i++) {
+            let layer = this.cell_order[i];
+            let y = 0;
+            for (let cell of layer) {
+                cell.x = cell.depth * LAYER_WIDTH;
+                cell.y = y;
+                y += (Math.max(cell.in_links.length, cell.out_links.length) + 1) * GRID_SIZE;
+            }
         }
     }
 
@@ -302,6 +343,8 @@ function show_graph(graph: Graph) {
     graph.insert_dummy_cells();
     console.log("Dummy cells inserted");
     graph.validate();
+    graph.init_layers();
+    graph.greedy_sort();
     graph.update_xy();
     console.log("xy updated");
     graph.validate();
@@ -312,5 +355,6 @@ function show_graph(graph: Graph) {
 async function init() {
     let netlist = await load_netlist("design_dump.txt");
     graph = to_graph(netlist);
+    //graph = make_big_test_graph();
     show_graph(graph);
 }
