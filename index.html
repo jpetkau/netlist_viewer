@@ -26,11 +26,15 @@
         stroke: #f00;
         stroke-width: 2px;
     }
+
+    /* text in the SVG only appears when hovering over a parent element */
+    g.block text {display: none; pointer-events: none;}
+    g.block:hover text {display: block;}
 </style>
 
+<script src="./dist/graph.js"></script>
 <script src="./dist/interact.js"></script>
 <script src="./dist/netlist.js"></script>
-<script src="./dist/parse.js"></script>
 <script>
 
     function animate() {

@@ -4,7 +4,17 @@
   "description": "visualize netlists",
   "main": "index.html",
   "scripts": {
-    "test": "dunno"
+    "start": "lite-server",
+    "watch": "tsc --watch"
+  },
+  "lite-server": {
+    "server": {
+      "baseDir": ["./", "./dist"]
+    },
+    "files": [
+      "./dist/**/*.js",
+      "./index.html"
+    ]
   },
   "author": "",
   "license": "ISC"
